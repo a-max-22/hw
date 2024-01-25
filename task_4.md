@@ -24,112 +24,113 @@ typedef std::vector<char> TestCase;
 
 class Mutator
 {
-	public:
-		Mutator()
-		{
-		};
-		virtual ~Mutator()
-		{
-		};
-		virtual TestCase &Mutate() = 0;	
+public:
+	Mutator()
+	{
+	};
+	virtual ~Mutator()
+	{
+	};
+	virtual TestCase &Mutate() = 0;	
 };
 
 class SequentialMutator:public Mutator
 {
-	public:
-		SequentialMutator()
-		{
-		};
-		virtual ~SequentialMutator()
-		{};
-		virtual TestCase &Mutate() = 0; //mutation params
-		virtual bool IsMutationFinished() = 0;		
+public:
+	SequentialMutator()
+	{
+	};
+	virtual ~SequentialMutator()
+	{
+	};
+	virtual TestCase &Mutate() = 0; //mutation params
+	virtual bool IsMutationFinished() = 0;		
 };
 
 class SequentialByteGrainedMutator:public SequentialMutator
 {
-	protected:
-		TestCase _data;	
-		int _range;
-		int _mutationPos;
+protected:
+	TestCase _data;	
+	int _range;
+	int _mutationPos;
 
-		// count of successive bytes changed by sungle mutation;
-		int _mutationSize;
+	// count of successive bytes changed by sungle mutation;
+	int _mutationSize;
 
-	protected:		
-		// modification area begin
-		// modification ared end
-		virtual char* ModifyData(char* modBegin, char* modEnd)
-		{
-			return modBegin;
+protected:		
+	// modification area begin
+	// modification ared end
+	virtual char* ModifyData(char* modBegin, char* modEnd)
+	{
+		return modBegin;
+	}
+	virtual void MakeMutation(int mutationPos)
+	{				
+		try
+		{								
+			// get original value ptr
+			ModifyData(&_data.at(mutationPos), &_data.at(mutationPos+_mutationSize-1));
 		}
-		virtual void MakeMutation(int mutationPos)
+		catch (std::out_of_range)
 		{				
-			try
-			{								
-				// get original value ptr
-				ModifyData(&_data.at(mutationPos), &_data.at(mutationPos+_mutationSize-1));
-			}
-			catch (std::out_of_range)
-			{				
-				std::cout<<"don't mutate" << std::endl;			
-			}
+			std::cout<<"don't mutate" << std::endl;			
 		}
-		virtual char* RestoreData(char* modBegin, char* modEnd)
-		{
-			return modBegin;
-		}
-		
-		virtual void RestorePreviouslyMutatedData(int restorePos)
-		{			
-			try
-			{								
-				// get original value ptr
-				RestoreData(&_data.at(restorePos), &_data.at(restorePos+_mutationSize-1));
-			}
-			catch (std::out_of_range)
-			{
-				std::cout<<"don't restore" << std::endl;
-			}
-		}
-
-		virtual void inline AdvancePosition()
-		{
-			_mutationPos++;
-		}
+	}
 	
-		virtual void inline SkipMutation()
-		{
-			_mutationPos++;
-		}
+  	virtual char* RestoreData(char* modBegin, char* modEnd)
+	{
+		return modBegin;
+	}
 		
-	public:
-		SequentialByteGrainedMutator(TestCase data)
-		{			
-			_data = data;
-			_range = data.size();			
-			_mutationSize = 1;
-			_mutationPos = -1;
-		};
-		virtual ~SequentialByteGrainedMutator()
+	virtual void RestorePreviouslyMutatedData(int restorePos)
+	{			
+		try
+		{								
+			// get original value ptr
+			RestoreData(&_data.at(restorePos), &_data.at(restorePos+_mutationSize-1));
+		}
+		catch (std::out_of_range)
 		{
-			
-		};
+			std::cout<<"don't restore" << std::endl;
+		}
+	}
 
-		virtual TestCase &Mutate() 
-		{	
-			if (IsMutationFinished())
-				return _data;
-			
-			RestorePreviouslyMutatedData(_mutationPos);			
-			AdvancePosition();
-			MakeMutation(_mutationPos);	
+	virtual void inline AdvancePosition()
+	{
+		_mutationPos++;
+	}
+	
+	virtual void inline SkipMutation()
+	{
+		_mutationPos++;
+	}
+		
+public:
+	SequentialByteGrainedMutator(TestCase data)
+	{			
+		_data = data;
+		_range = data.size();			
+		_mutationSize = 1;
+		_mutationPos = -1;
+	};
+	virtual ~SequentialByteGrainedMutator()
+	{		
+	};
+
+	virtual TestCase &Mutate() 
+	{	
+		if (IsMutationFinished())
 			return _data;
-		};
-		virtual bool IsMutationFinished()
-		{
-			return _mutationPos + _mutationSize - 1 >= _range;
-		};		
+			
+		RestorePreviouslyMutatedData(_mutationPos);			
+		AdvancePosition();
+		MakeMutation(_mutationPos);	
+		return _data;
+	};
+	virtual bool IsMutationFinished()
+	{
+		return _mutationPos + _mutationSize - 1 >= _range;
+	};		
 };
 
 class ByteFlip:public SequentialByteGrainedMutator
