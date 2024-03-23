@@ -289,7 +289,7 @@ def run_config(context:SymExecContext, state, config):
 	        currentState = runner.runStateUntilDstUnknown(state = currentState, start = None)
 			...
 	
-		# убрал строку: 
+            # убрал строку: 
 	    # modifiedSymbols = getModifiedSymbols(initialState, currentState)
 	    # вычисления измененных символов будут производиться вовне, при необходимости
 	    return currentState
